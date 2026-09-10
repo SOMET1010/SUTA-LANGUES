@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SUTA-LANGUES — Test des langues ivoiriennes</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#172018;background:#f4f6f1}body{margin:0}.wrap{max-width:760px;margin:auto;padding:32px 20px}header{background:linear-gradient(135deg,#f07b22,#0b7a43);color:white;padding:32px;border-radius:22px}h1{margin:0 0 8px}.card{background:white;padding:24px;border-radius:18px;margin-top:18px;box-shadow:0 8px 30px #18351d12}label{display:block;font-weight:700;margin:14px 0 6px}select,input,button{width:100%;box-sizing:border-box;padding:13px;border-radius:10px;border:1px solid #bcc8bd}button{margin-top:18px;background:#0b7a43;color:white;font-weight:800;border:0;cursor:pointer}button:disabled{opacity:.5}.note{font-size:.9rem;color:#55645a}.result{white-space:pre-wrap;background:#f2f7f2;padding:16px;border-radius:12px;min-height:42px}.pill{display:inline-block;background:#fff3e7;color:#9b4a0d;padding:5px 9px;border-radius:99px;font-size:.8rem}
+  </style>
+</head>
+<body><main class="wrap">
+  <header><span class="pill">LABO SUTA</span><h1>L’oreille ivoirienne</h1><p>Testez la transcription des langues déjà présentes dans Omnilingual ASR.</p></header>
+  <section class="card">
+    <label for="lang">Langue parlée</label><select id="lang"></select>
+    <label for="audio">Enregistrement audio</label><input id="audio" type="file" accept="audio/*" capture>
+    <p class="note">Choisissez un extrait court et clair. Aucun audio n’est conservé par cette API.</p>
+    <button id="send">Transcrire</button>
+  </section>
+  <section class="card"><h2>Résultat</h2><div id="result" class="result">En attente d’un audio…</div></section>
+</main><script>
+const lang=document.querySelector('#lang'),audio=document.querySelector('#audio'),send=document.querySelector('#send'),result=document.querySelector('#result');
+fetch('/v1/langues').then(r=>r.json()).then(({langues})=>lang.innerHTML=langues.map(x=>`<option value="${x.code}">${x.name} — ${x.local_name} (${x.code})</option>`).join(''));
+send.onclick=async()=>{if(!audio.files[0]){result.textContent='Choisissez d’abord un audio.';return}send.disabled=true;result.textContent='Transcription en cours…';const f=audio.files[0],reader=new FileReader();reader.onload=async()=>{try{const r=await fetch('/v1/transcrire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audio:reader.result,mime:f.type||'audio/webm',lang:lang.value})});const data=await r.json();if(!r.ok)throw new Error(data.detail||'Erreur');result.textContent=data.texte+`\n\nModèle : ${data.modele} · ${data.duree_ms} ms`}catch(e){result.textContent='Erreur : '+e.message}finally{send.disabled=false}};reader.readAsDataURL(f)};
+</script></body></html>
+
