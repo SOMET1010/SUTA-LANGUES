@@ -21,8 +21,13 @@ client = TestClient(create_app(FakeBackend()))
 def test_lists_verified_ivorian_languages():
     response = client.get("/v1/langues")
     assert response.status_code == 200
-    codes = {item["code"] for item in response.json()["langues"]}
-    assert {"dyu_Latn", "bci_Latn", "any_Latn", "ati_Latn"} <= codes
+    langues = response.json()["langues"]
+    codes = {item["code"] for item in langues}
+    # Les 24 langues vérifiées dans la liste officielle du modèle
+    # (omnilingual-asr 0.2.0) — le dioula, véhiculaire du pays, en tête.
+    assert len(langues) == 24
+    assert langues[0]["code"] == "dyu_Latn"
+    assert {"bam_Latn", "mos_Latn", "dyi_Latn", "wob_Latn", "ful_Latn", "hau_Latn"} <= codes
 
 
 def test_suta_json_contract_transcribes_audio():
@@ -54,3 +59,29 @@ def test_rejects_invalid_audio():
     )
     assert response.status_code == 422
 
+
+
+def test_requires_api_key_when_configured(monkeypatch):
+    monkeypatch.setenv("LANGUES_API_KEY", "cle-de-test")
+    payload = {
+        "audio": base64.b64encode(b"RIFF-test").decode(),
+        "mime": "audio/wav",
+        "lang": "dyu_Latn",
+    }
+    sans_cle = client.post("/v1/transcrire", json=payload)
+    assert sans_cle.status_code == 401
+    mauvaise = client.post(
+        "/v1/transcrire", json=payload, headers={"Authorization": "Bearer autre"}
+    )
+    assert mauvaise.status_code == 401
+    bonne = client.post(
+        "/v1/transcrire", json=payload, headers={"Authorization": "Bearer cle-de-test"}
+    )
+    assert bonne.status_code == 200
+    assert bonne.json()["texte"] == "i ni ce"
+
+
+def test_open_endpoints_stay_open_with_api_key(monkeypatch):
+    monkeypatch.setenv("LANGUES_API_KEY", "cle-de-test")
+    assert client.get("/health").status_code == 200
+    assert client.get("/v1/langues").status_code == 200

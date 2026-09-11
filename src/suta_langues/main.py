@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hmac
 import os
 from pathlib import Path
 from time import perf_counter
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -46,6 +47,19 @@ class TranscriptionResponse(BaseModel):
     duree_ms: int
 
 
+def require_api_key(authorization: str | None) -> None:
+    """Clé d'accès du service (LANGUES_API_KEY) — SUTA l'envoie en Bearer
+    (LABO_ASR_KEY de son côté). Lue à chaque appel pour rester testable.
+    Vide = service ouvert (développement local uniquement) ; en production
+    la clé est OBLIGATOIRE, en plus de la passerelle réseau (README)."""
+    expected = os.getenv("LANGUES_API_KEY", "").strip()
+    if not expected:
+        return
+    provided = (authorization or "").removeprefix("Bearer ").strip()
+    if not hmac.compare_digest(provided.encode(), expected.encode()):
+        raise HTTPException(status_code=401, detail="Clé d'accès absente ou invalide")
+
+
 def decode_audio(value: str) -> bytes:
     payload = value.split(",", 1)[1] if value.startswith("data:") and "," in value else value
     try:
@@ -76,7 +90,8 @@ def create_app(backend: ASRBackend | None = None) -> FastAPI:
         return {"langues": public_languages(), "avertissement": "Présence modèle confirmée; qualité terrain à valider."}
 
     @app.post("/v1/transcrire", response_model=TranscriptionResponse)
-    def transcrire(request: TranscriptionRequest):
+    def transcrire(request: TranscriptionRequest, authorization: str | None = Header(default=None)):
+        require_api_key(authorization)
         audio = decode_audio(request.audio)
         started = perf_counter()
         try:

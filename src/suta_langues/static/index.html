@@ -12,13 +12,14 @@
   <section class="card">
     <label for="lang">Langue parlée</label><select id="lang"></select>
     <label for="audio">Enregistrement audio</label><input id="audio" type="file" accept="audio/*" capture>
+    <label for="cle">Clé d’accès (si le service en exige une)</label><input id="cle" type="password" autocomplete="off" placeholder="Laisser vide en développement local">
     <p class="note">Choisissez un extrait court et clair. Aucun audio n’est conservé par cette API.</p>
     <button id="send">Transcrire</button>
   </section>
   <section class="card"><h2>Résultat</h2><div id="result" class="result">En attente d’un audio…</div></section>
 </main><script>
-const lang=document.querySelector('#lang'),audio=document.querySelector('#audio'),send=document.querySelector('#send'),result=document.querySelector('#result');
+const lang=document.querySelector('#lang'),audio=document.querySelector('#audio'),send=document.querySelector('#send'),result=document.querySelector('#result'),cle=document.querySelector('#cle');
 fetch('/v1/langues').then(r=>r.json()).then(({langues})=>lang.innerHTML=langues.map(x=>`<option value="${x.code}">${x.name} — ${x.local_name} (${x.code})</option>`).join(''));
-send.onclick=async()=>{if(!audio.files[0]){result.textContent='Choisissez d’abord un audio.';return}send.disabled=true;result.textContent='Transcription en cours…';const f=audio.files[0],reader=new FileReader();reader.onload=async()=>{try{const r=await fetch('/v1/transcrire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audio:reader.result,mime:f.type||'audio/webm',lang:lang.value})});const data=await r.json();if(!r.ok)throw new Error(data.detail||'Erreur');result.textContent=data.texte+`\n\nModèle : ${data.modele} · ${data.duree_ms} ms`}catch(e){result.textContent='Erreur : '+e.message}finally{send.disabled=false}};reader.readAsDataURL(f)};
+send.onclick=async()=>{if(!audio.files[0]){result.textContent='Choisissez d’abord un audio.';return}send.disabled=true;result.textContent='Transcription en cours…';const f=audio.files[0],reader=new FileReader();reader.onload=async()=>{try{const headers={'Content-Type':'application/json'};if(cle.value.trim())headers.Authorization='Bearer '+cle.value.trim();const r=await fetch('/v1/transcrire',{method:'POST',headers,body:JSON.stringify({audio:reader.result,mime:f.type||'audio/webm',lang:lang.value})});const data=await r.json();if(!r.ok)throw new Error(data.detail||'Erreur');result.textContent=data.texte+`\n\nModèle : ${data.modele} · ${data.duree_ms} ms`}catch(e){result.textContent='Erreur : '+e.message}finally{send.disabled=false}};reader.readAsDataURL(f)};
 </script></body></html>
 

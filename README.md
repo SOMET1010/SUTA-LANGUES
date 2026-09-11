@@ -17,8 +17,19 @@ Réponse :
 {"texte":"i ni ce","traduction":null,"lang":"dyu_Latn","modele":"omniASR_CTC_300M_v2","duree_ms":420}
 ```
 
-`GET /v1/langues` renvoie les langues ivoiriennes activées. Leur présence dans le
-modèle est confirmée; leur qualité doit être mesurée avec des locuteurs.
+`GET /v1/langues` renvoie les langues ivoiriennes activées — 24 langues, toutes
+vérifiées dans la liste officielle du modèle (`lang_ids.py` d'omnilingual-asr
+0.2.0, revérifiée le 11/09/2026). Leur présence dans le modèle est confirmée ;
+leur qualité doit être mesurée avec des locuteurs (labo langues de SUTA).
+
+## Clé d'accès
+
+Définir `LANGUES_API_KEY` protège `/v1/transcrire` : l'appelant doit envoyer
+`Authorization: Bearer <clé>` — côté SUTA c'est la variable `LABO_ASR_KEY`,
+même valeur. Variable vide = service ouvert, acceptable UNIQUEMENT en
+développement local ; en production la clé est obligatoire, en plus de la
+passerelle réseau (voir Docker / Azure). La clé se transmet par le coffre à
+secrets, jamais par messagerie.
 
 ## Lancer pour développer
 
