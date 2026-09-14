@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from threading import Lock
+from threading import Lock, Thread
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from maliba_ai.tts.inference import BambaraTTSInference
 from maliba_ai.config.settings import Speakers
 
-app = FastAPI(title="SUTA MALIBA TTS", version="0.1.0")
+app = FastAPI(title="SUTA MALIBA TTS", version="0.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,6 +24,7 @@ app.add_middleware(
 _engine = None
 _engine_lock = Lock()
 _generate_lock = Lock()
+_warmup_status = {"state": "pending", "error": None}
 
 SPEAKERS = {
     "Bourama": Speakers.Bourama,
@@ -53,9 +54,40 @@ def get_engine() -> BambaraTTSInference:
     return _engine
 
 
+def warmup() -> None:
+    _warmup_status["state"] = "warming"
+    path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as handle:
+            path = handle.name
+        with _generate_lock:
+            get_engine().generate_speech(
+                text="Aw ni ce.",
+                speaker_id=SPEAKERS["Bourama"],
+                output_filename=path,
+            )
+        _warmup_status["state"] = "ready"
+    except Exception as exc:
+        _warmup_status["state"] = "error"
+        _warmup_status["error"] = str(exc)
+    finally:
+        if path:
+            Path(path).unlink(missing_ok=True)
+
+
+@app.on_event("startup")
+def start_warmup() -> None:
+    Thread(target=warmup, daemon=True, name="maliba-warmup").start()
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "maliba-tts", "speakers": list(SPEAKERS)}
+    return {
+        "status": "ok",
+        "service": "maliba-tts",
+        "warmup": _warmup_status["state"],
+        "speakers": list(SPEAKERS),
+    }
 
 
 @app.post("/v1/tts")
@@ -107,6 +139,7 @@ body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0
 textarea,select,button{width:100%;box-sizing:border-box;margin-top:10px;font:inherit}
 textarea,select{padding:12px;border:1px solid #ccc;border-radius:10px}
 button{padding:13px;border:0;border-radius:10px;background:#173f2c;color:white;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
 audio{width:100%;margin-top:18px}.muted{color:#667268;font-size:.95rem}
 </style>
 </head>
@@ -119,12 +152,26 @@ audio{width:100%;margin-top:18px}.muted{color:#667268;font-size:.95rem}
 <select id='speaker'>
 <option>Bourama</option><option>Adama</option><option>Moussa</option><option>Modibo</option><option>Seydou</option><option>Amadou</option><option>Bakary</option><option>Ngolo</option><option>Ibrahima</option><option>Amara</option>
 </select>
-<button id='go'>Generer la voix</button>
-<p id='status' class='muted'>Pret.</p>
+<button id='go' disabled>Preparation de MALIBA...</button>
+<p id='status' class='muted'>Chargement du modele en arriere-plan...</p>
 <audio id='audio' controls></audio>
 </div>
 <script>
 const go=document.getElementById('go'),status=document.getElementById('status'),audio=document.getElementById('audio');
+async function checkReady(){
+ try{
+  const r=await fetch('/health'); const h=await r.json();
+  if(h.warmup==='ready'){
+   go.disabled=false; go.textContent='Generer la voix'; status.textContent='MALIBA est pret.'; return;
+  }
+  if(h.warmup==='error'){
+   go.disabled=false; go.textContent='Generer la voix'; status.textContent='Warm-up incomplet, essai direct possible.'; return;
+  }
+  status.textContent='Preparation de MALIBA...';
+ }catch(e){status.textContent='Verification du service...'}
+ setTimeout(checkReady,2000);
+}
+checkReady();
 go.onclick=async()=>{
  go.disabled=true; status.textContent='Generation en cours...';
  try{
