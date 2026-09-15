@@ -79,38 +79,52 @@ un pod arrêté **peut** être redémarré en mode CPU depuis l'UI. En mode CPU,
 normal et sans effet sur l'inventaire ou la copie. Le GPU n'est requis qu'à
 l'étape 4, sur le **nouveau** pod.
 
-## 2. Faits constatés dans l'UI (captures du 2026-09-15)
+## 2. État réel du compte (relevé le 15/09/2026)
 
-| Élément | Valeur |
-|---|---|
-| Pod `suta-langues-a40-migration` | **EU-CZ-1**, RTX 3090 ×1 — celui qui porte les données |
-| Pod `suta-langues-a40` | EU-CZ-1, RTX 3090 ×1 — doublon, contenu à vérifier |
-| Pod `suta-langues-test` | **EU-RO-1**, RTX 4090 ×1 |
-| Volume `suta-langues-test_volume` | 50 Go, **EU-RO-1**, ID `vn82f9ix44`, 3,50 $/mois |
-| API S3 du volume | bucket `vn82f9ix44`, endpoint `https://s3api-eu-ro-1.runpod.io`, région `eu-ro-1` |
-| ID du pod source | `evnhxolsqj8oz3` (Secure cloud) |
-| État du pod source | **arrêté** (Compute : *Not running*) — volume 50 Go toujours facturé 0,014 $/h, **données intactes** |
-| Disque du pod source | Volume disk **50 Go sur `/workspace`** + container disk 60 Go |
-| Image | `runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404` |
-| Redémarrage GPU | 0,50 $/h — inutile pour la sauvegarde |
+### Pods — les trois sont arrêtés (`EXITED`)
 
-⚠️ **Le volume source fait 50 Go et le Network Volume aussi.** Si `/workspace` est
-rempli à plus de ~45 Go, archives + extraction ne tiendront pas : il faudra
-agrandir le Network Volume avant la copie. L'inventaire tranche.
+| Nom | ID | Région | GPU | Prix/h | `/workspace` |
+|---|---|---|---|---|---|
+| suta-langues-a40-migration | `evnhxolsqj8oz3` | EU-CZ-1 | 1× RTX 3090 | 0,50 $ | Volume de pod, 50 Go — **source des données** |
+| suta-langues-a40 | `r9pmr12s7bbpc0` | EU-CZ-1 | 1× RTX 3090 | 0,50 $ | Volume de pod, 50 Go — doublon, contenu inconnu |
+| suta-langues-test | `sgcli9bs7s9v5h` | EU-RO-1 | 1× RTX 4090 | 0,74 $ | **Network Volume `vn82f9ix44`** — pod de destination |
 
-**Conséquence majeure : le pod source (EU-CZ-1) et le volume (EU-RO-1) ne sont pas
-dans la même région.** Un Network Volume ne s'attache qu'à un pod de sa région :
-l'ancien pod ne pourra jamais le monter. Mais le volume expose une **API S3**
-joignable depuis n'importe où — c'est la voie retenue, et elle supprime le besoin
-d'un second pod allumé pendant la copie.
+Image commune : `runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404`, disque conteneur 60 Go.
+Les pods « a40 » n'ont pas de GPU A40 : c'est une RTX 3090. Le nom est trompeur.
 
-Restent à confirmer :
+### Trois conséquences
 
-1. **`suta-langues-test` (EU-RO-1) a-t-il déjà le volume monté sur `/workspace` ?**
-   Si oui, pas de nouveau pod à créer pour l'étape 4.
-2. Le volume est-il **vide** ou contient-il déjà des données ?
-3. Volumétrie réelle de `/workspace` sur l'ancien pod → donnée par l'étape 3.
-   50 Go au total ; prévoir archives + extraction.
+1. **`suta-langues-test` monte déjà le Network Volume.** Il n'y a donc **aucun pod
+   à créer** : c'est lui le pod de destination. Vérifier d'abord ce que le volume
+   contient déjà (`06_s3_restauration.sh` n'écrase rien, mais autant le savoir).
+2. **Plus aucune RTX 3090 en stock, nulle part.** Les deux pods d'EU-CZ-1 ne
+   redémarreront probablement pas sur GPU → le **démarrage CPU** n'est pas un
+   contournement, c'est la seule voie d'accès aux données. Confirme la stratégie.
+3. **Plus aucune RTX 4090 en EU-RO-1** (la seule est en EU-CZ-1, inaccessible au
+   volume). `suta-langues-test` ne redémarrera pas tel quel : il faut **changer son
+   type de GPU** pour un modèle disponible en EU-RO-1.
+
+### GPU de destination — choix pour Spark-TTS 0.5B
+
+Un modèle 0,5 B en inférence TTS tient sous 8 Go de VRAM. Inutile de payer la VRAM.
+Disponibles en EU-RO-1, par ordre de préférence :
+
+| Rang | GPU | VRAM | Prix/h | Stock | Verdict |
+|---|---|---|---|---|---|
+| 1 | **RTX 2000 Ada** | 16 Go | **0,24 $** | Faible | Suffisant et le moins cher. À tenter en premier. |
+| 2 | **L4** | 24 Go | 0,49 $ | Faible | Marge confortable, moins cher que l'ancienne 3090. |
+| 3 | RTX PRO 4000 | 24 Go | 0,57 $ | Faible | Équivalent, un peu plus cher. |
+| 4 | RTX 5090 | 32 Go | 0,99 $ | Faible | Surdimensionné. |
+| — | RTX PRO 6000 | 96 Go | 2,09 $ | **Élevé** | Filet de sécurité : le seul stock fiable. À n'utiliser que si les autres refusent de démarrer, et à arrêter aussitôt le test fait. |
+
+À éviter : A100 (1,59 $), MI300X (2,39 $) — aucun bénéfice ici.
+
+### Coût du statu quo
+
+Trois volumes de 50 Go facturés en permanence, pods arrêtés compris :
+~0,014 $/h × 2 volumes de pod ≈ **20 $/mois**, plus 3,50 $/mois pour le Network
+Volume. C'est ce que la migration doit permettre d'arrêter — mais seulement
+après vérification verte et accord explicite.
 
 ## 3. Étape 1 — Inventaire (lecture seule)
 
@@ -165,8 +179,21 @@ GPU visé pour l'étape 4 : `suta-langues-test` est déjà en **RTX 4090 / EU-RO
 ce qui correspond au premier choix (Spark-TTS 0.5B tient largement sous 24 Go).
 Exposer le port HTTP **7860** sur ce pod.
 
-**Voie de secours** si l'API S3 pose problème : `02_copie.sh` (rsync pod à pod,
-inter-région, plus lent) ou `02b_copie_runpodctl.sh` (pair-à-pair).
+### Quelle voie choisir — l'inventaire tranche
+
+Le Network Volume fait 50 Go. La voie S3 dépose des archives **sur le volume**,
+puis les déballe **sur le volume** : il faut donc temporairement la place des
+archives **plus** celle des données extraites.
+
+| Taille de `/workspace` source | Voie |
+|---|---|
+| ≤ ~22 Go | **S3** (`05` + `06`) — un seul pod allumé à la fois, plus simple |
+| > ~22 Go | **rsync direct** (`02_copie.sh`) — les deux pods allumés en CPU, aucune archive intermédiaire, donc 1× l'espace |
+
+Variante si l'espace est juste en S3 : déballer **une archive à la fois** et
+supprimer chacune après vérification — suppression soumise à accord explicite.
+
+**Secours** si aucune des deux ne passe : `02b_copie_runpodctl.sh` (pair-à-pair).
 
 ## 5. Étape 3 — Vérification avant toute suppression
 
@@ -203,5 +230,6 @@ une phrase → WAV.
 | Date | Vérifié | Changé | Reste à faire |
 |---|---|---|---|
 | 2026-09-15 | Accès RunPod depuis la session : `api.runpod.io`, `console.runpod.io`, `s3api-eu-ro-1.runpod.io`, docs et SSH **tous bloqués** par la politique réseau. Repo : aucune trace de la config RunPod/Spark-TTS. | Ajout du dossier `runpod/` : runbook + 7 scripts. | Sortie de `ls -lah /workspace` puis de `01_inventaire.sh` sur l'ancien pod démarré en CPU. |
+| 2026-09-15 | Relevé complet du compte : 3 pods tous arrêtés, plus aucune RTX 3090 ni RTX 4090 en stock utile ; `suta-langues-test` monte déjà le Network Volume. | Runbook : état réel, choix du GPU de destination (RTX 2000 Ada → L4 → RTX PRO 4000), règle de choix S3 vs rsync selon la volumétrie. | Démarrer `evnhxolsqj8oz3` en CPU et relever `ls`/`df`/`du`. |
 | 2026-09-15 | MCP RunPod (`mcp.getrunpod.io`, `docs.runpod.io/mcp`) : bloqué par le proxy depuis la session cloud, `claude mcp add` s'arrête sur *Needs authentication*. | Section 0 bis : installation du MCP côté machine utilisateur. Entrée MCP de test retirée de la config. | Connecter le MCP sur le PC Windows, puis lui demander la liste de ses outils pour savoir s'il donne un shell dans le pod. |
 | 2026-09-15 | Correction : le pod **peut** redémarrer en CPU (*Start Pod using CPUs*) — mon affirmation inverse était fausse. Constaté aussi : source en EU-CZ-1, volume en EU-RO-1, et volume accessible en S3. | Runbook corrigé ; voie S3 retenue à la place du transfert pod à pod ; ajout de `05_s3_sauvegarde.sh` et `06_s3_restauration.sh`. | Créer la clé S3 (Settings → S3 API Keys) ; confirmer si `suta-langues-test` monte déjà le volume. |
