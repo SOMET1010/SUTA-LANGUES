@@ -28,31 +28,64 @@ donc **de pod à pod**, pas par « rebranchement » du volume.
 
 Deux chemins possibles, par ordre de préférence :
 
-- **A — l'ancien pod redémarre** (autre GPU disponible dans son datacenter) :
-  on le démarre, on inventorie, on tire les données vers le nouveau pod.
-- **B — l'ancien pod ne redémarre pas du tout** : les données sont bloquées
-  dans son datacenter. Seul recours : support RunPod. **Ne pas terminer le pod**,
-  ce serait la perte définitive.
+- **A — démarrage CPU (voie retenue)** : l'UI RunPod propose
+  **Start → Start Pod using CPUs** sur `suta-langues-a40-migration`. C'est suffisant
+  pour lire `/workspace`, inventorier et copier : aucune de ces opérations n'a besoin
+  de GPU. On n'attend donc pas la disponibilité d'un GPU pour sauvegarder.
+- **B — l'ancien pod ne démarre pas du tout, même en CPU** : les données sont
+  bloquées dans son datacenter. Seul recours : support RunPod. **Ne pas terminer
+  le pod**, ce serait la perte définitive.
 
-Point à confirmer dans l'UI (je ne peux pas le vérifier) : RunPod permet d'éditer
-un pod **arrêté** pour changer de type de GPU, mais **dans le même datacenter**.
-Un pod GPU ne se convertit pas en pod CPU.
+Correctif (une version précédente de ce runbook affirmait le contraire, à tort) :
+un pod arrêté **peut** être redémarré en mode CPU depuis l'UI. En mode CPU,
+`nvidia-smi` ne répond pas et `torch.cuda.is_available()` vaut `False` — c'est
+normal et sans effet sur l'inventaire ou la copie. Le GPU n'est requis qu'à
+l'étape 4, sur le **nouveau** pod.
 
-## 2. Informations manquantes — À DÉFINIR
+## 2. Faits constatés dans l'UI (captures du 2026-09-15)
 
-Je ne les invente pas, il me les faut avant d'aller plus loin :
+| Élément | Valeur |
+|---|---|
+| Pod `suta-langues-a40-migration` | **EU-CZ-1**, RTX 3090 ×1 — celui qui porte les données |
+| Pod `suta-langues-a40` | EU-CZ-1, RTX 3090 ×1 — doublon, contenu à vérifier |
+| Pod `suta-langues-test` | **EU-RO-1**, RTX 4090 ×1 |
+| Volume `suta-langues-test_volume` | 50 Go, **EU-RO-1**, ID `vn82f9ix44`, 3,50 $/mois |
+| API S3 du volume | bucket `vn82f9ix44`, endpoint `https://s3api-eu-ro-1.runpod.io`, région `eu-ro-1` |
+| ID du pod source | `evnhxolsqj8oz3` (Secure cloud) |
+| État du pod source | **arrêté** (Compute : *Not running*) — volume 50 Go toujours facturé 0,014 $/h, **données intactes** |
+| Disque du pod source | Volume disk **50 Go sur `/workspace`** + container disk 60 Go |
+| Image | `runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404` |
+| Redémarrage GPU | 0,50 $/h — inutile pour la sauvegarde |
 
-1. **Datacenter de l'ancien pod `suta-langues-a40-migration`** — visible sur la carte du pod.
-   S'il n'est pas dans `EU-RO-1`, la copie est inter-région (plus lente, mais faisable).
-2. **L'ancien pod existe-t-il toujours** (arrêté, pas terminé) ?
-3. **Volumétrie réelle de `/workspace`** — donnée par l'étape 3 ci-dessous.
-   Le Network Volume fait 50 Go ; un venv avec torch + le modèle peut approcher 15-20 Go.
-4. **Budget/heure acceptable** pour le nouveau GPU.
-5. Le Network Volume `suta-langues-test_volume` (`vn82f9ix44`) est-il **vide** ou contient-il déjà quelque chose ?
+⚠️ **Le volume source fait 50 Go et le Network Volume aussi.** Si `/workspace` est
+rempli à plus de ~45 Go, archives + extraction ne tiendront pas : il faudra
+agrandir le Network Volume avant la copie. L'inventaire tranche.
+
+**Conséquence majeure : le pod source (EU-CZ-1) et le volume (EU-RO-1) ne sont pas
+dans la même région.** Un Network Volume ne s'attache qu'à un pod de sa région :
+l'ancien pod ne pourra jamais le monter. Mais le volume expose une **API S3**
+joignable depuis n'importe où — c'est la voie retenue, et elle supprime le besoin
+d'un second pod allumé pendant la copie.
+
+Restent à confirmer :
+
+1. **`suta-langues-test` (EU-RO-1) a-t-il déjà le volume monté sur `/workspace` ?**
+   Si oui, pas de nouveau pod à créer pour l'étape 4.
+2. Le volume est-il **vide** ou contient-il déjà des données ?
+3. Volumétrie réelle de `/workspace` sur l'ancien pod → donnée par l'étape 3.
+   50 Go au total ; prévoir archives + extraction.
 
 ## 3. Étape 1 — Inventaire (lecture seule)
 
-Sur l'**ancien pod**, une fois démarré (terminal web RunPod) :
+Sur l'**ancien pod**, démarré via **Start → Start Pod using CPUs**, dans le
+Web Terminal. D'abord un contrôle à l'œil nu, avant tout script :
+
+```bash
+ls -lah /workspace
+```
+
+`SUTA-LANGUES`, `Spark-TTS`, `maliba-venv` et `maliba-test.wav` doivent apparaître.
+Ensuite seulement :
 
 ```bash
 cd /workspace && curl -fsSL -o 01_inventaire.sh \
@@ -65,26 +98,38 @@ et les empreintes SHA256 des fichiers critiques. **N'écrit rien ailleurs, ne su
 
 Me renvoyer la sortie : elle décide de la taille du volume et du GPU nécessaires.
 
-## 4. Étape 2 — Nouveau pod + copie
+## 4. Étape 2 — Sauvegarde vers le volume via l'API S3 (voie retenue)
 
-1. Créer un pod GPU **dans `EU-RO-1`** (même région que le volume) en attachant
-   le Network Volume `suta-langues-test_volume` monté sur `/workspace`.
-2. GPU : Spark-TTS 0.5B tient largement sous 24 Go de VRAM.
-   Ordre de préférence : **RTX 4090 → RTX 3090 → A5000 → A40**, selon dispo et prix
-   dans EU-RO-1. Pas de H100/H200/RTX PRO 6000 : surcoût sans bénéfice ici.
-3. Exposer le port HTTP **7860** dès la création du pod.
-4. Copier, depuis le **nouveau** pod (simulation d'abord) :
+Le bucket S3 **est** le Network Volume : ce qui est déposé dedans apparaîtra sous
+`/workspace` sur le pod GPU d'EU-RO-1. Donc : pas de SSH entre pods, pas de second
+pod allumé, et la barrière inter-région disparaît.
+
+Chaque dossier part en **archive `tar.gz` streamée** — pas d'espace disque
+consommé sur l'ancien pod, et les liens symboliques / bits exécutables du venv
+sont préservés (un `aws s3 sync` brut les perdrait et casserait `maliba-venv`).
+
+Prérequis : une clé S3 créée dans RunPod (**Settings → S3 API Keys**), exportée en
+`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
 
 ```bash
-SRC_HOST=<ip_ancien_pod> SRC_PORT=<port_ssh_ancien_pod> bash 02_copie.sh --dry-run
-SRC_HOST=<ip_ancien_pod> SRC_PORT=<port_ssh_ancien_pod> bash 02_copie.sh
+pip install -q awscli
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+bash 05_s3_sauvegarde.sh
 ```
 
-`rsync` sans `--delete`, relançable sans tout recopier. Si les pods ne peuvent pas
-se joindre en SSH : `02b_copie_runpodctl.sh` (pair-à-pair, dossier par dossier).
+Puis, sur le pod GPU d'EU-RO-1 avec le volume monté sur `/workspace` :
 
-Le venv est restauré **au même chemin** `/workspace/maliba-venv` : ses chemins
-absolus restent valides, donc pas de réinstallation.
+```bash
+bash 06_s3_restauration.sh
+```
+
+GPU visé pour l'étape 4 : `suta-langues-test` est déjà en **RTX 4090 / EU-RO-1**,
+ce qui correspond au premier choix (Spark-TTS 0.5B tient largement sous 24 Go).
+Exposer le port HTTP **7860** sur ce pod.
+
+**Voie de secours** si l'API S3 pose problème : `02_copie.sh` (rsync pod à pod,
+inter-région, plus lent) ou `02b_copie_runpodctl.sh` (pair-à-pair).
 
 ## 5. Étape 3 — Vérification avant toute suppression
 
@@ -120,4 +165,5 @@ une phrase → WAV.
 
 | Date | Vérifié | Changé | Reste à faire |
 |---|---|---|---|
-| 2026-09-15 | Accès RunPod depuis la session : API, docs et SSH bloqués ; pas de clé API. Repo `somet1010/suta-langues` : pas de trace de la config RunPod/Spark-TTS. | Ajout du dossier `runpod/` : 5 scripts (inventaire, copie, copie de secours, vérification, relance) + ce runbook. | Réponses aux points « À DÉFINIR » §2, puis sortie de `01_inventaire.sh` sur l'ancien pod. |
+| 2026-09-15 | Accès RunPod depuis la session : `api.runpod.io`, `console.runpod.io`, `s3api-eu-ro-1.runpod.io`, docs et SSH **tous bloqués** par la politique réseau. Repo : aucune trace de la config RunPod/Spark-TTS. | Ajout du dossier `runpod/` : runbook + 7 scripts. | Sortie de `ls -lah /workspace` puis de `01_inventaire.sh` sur l'ancien pod démarré en CPU. |
+| 2026-09-15 | Correction : le pod **peut** redémarrer en CPU (*Start Pod using CPUs*) — mon affirmation inverse était fausse. Constaté aussi : source en EU-CZ-1, volume en EU-RO-1, et volume accessible en S3. | Runbook corrigé ; voie S3 retenue à la place du transfert pod à pod ; ajout de `05_s3_sauvegarde.sh` et `06_s3_restauration.sh`. | Créer la clé S3 (Settings → S3 API Keys) ; confirmer si `suta-langues-test` monte déjà le volume. |
