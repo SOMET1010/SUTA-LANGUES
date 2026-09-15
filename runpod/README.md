@@ -19,6 +19,43 @@ en démarrer un, ni exécuter une commande dedans). Les scripts de ce dossier so
 faits pour être collés dans le **terminal web du pod** ; tu me renvoies la sortie
 et je décide de la suite.
 
+### 0 bis. MCP RunPod — où il fonctionne, où il ne fonctionne pas
+
+RunPod publie deux serveurs MCP officiels :
+
+| Serveur | Endpoint |
+|---|---|
+| RunPod API (pods, volumes, templates, dispo GPU) | `https://mcp.getrunpod.io/` |
+| RunPod Docs | `https://docs.runpod.io/mcp` |
+
+Testé le 2026-09-15 **depuis la session cloud** : `mcp.getrunpod.io` et
+`docs.runpod.io` sont refusés par le proxy de sortie (`registry.npmjs.org` répond
+200, donc c'est bien une liste d'autorisation, pas une panne). `claude mcp add`
+enregistre le serveur puis s'arrête sur `! Needs authentication` — et l'OAuth
+exige un navigateur interactif, absent d'une session headless.
+
+**Le MCP doit donc tourner sur la machine de l'utilisateur** (Claude Code sous
+Windows, ou Claude Desktop), pas dans la session cloud :
+
+```bash
+# automatique (détecte Claude Code, Claude Desktop, Cursor, Windsurf, VS Code)
+npx @runpod/mcp-server@latest add
+
+# ou manuel, pour Claude Code
+claude mcp add --transport http runpod -s user https://mcp.getrunpod.io/
+# puis /mcp -> Sign in with RunPod
+```
+
+Claude Desktop : **Settings → Connectors → Add custom connector →**
+`https://mcp.getrunpod.io/`
+
+Portée réelle à vérifier une fois connecté (`/mcp` puis demander la liste des
+outils) : le MCP couvre le **plan de contrôle** RunPod — démarrer un pod, créer
+un pod avec volume, exposer un port, lister les GPU disponibles. Rien ne garantit
+qu'il donne un **shell dans le pod** : les commandes de ce runbook
+(`01_inventaire.sh`, `05_s3_sauvegarde.sh`…) passent par le Web Terminal tant que
+l'inverse n'est pas constaté.
+
 ## 1. Contrainte structurante à connaître avant de cliquer
 
 Un Network Volume RunPod s'attache **à la création du pod** et se monte sur
@@ -166,4 +203,5 @@ une phrase → WAV.
 | Date | Vérifié | Changé | Reste à faire |
 |---|---|---|---|
 | 2026-09-15 | Accès RunPod depuis la session : `api.runpod.io`, `console.runpod.io`, `s3api-eu-ro-1.runpod.io`, docs et SSH **tous bloqués** par la politique réseau. Repo : aucune trace de la config RunPod/Spark-TTS. | Ajout du dossier `runpod/` : runbook + 7 scripts. | Sortie de `ls -lah /workspace` puis de `01_inventaire.sh` sur l'ancien pod démarré en CPU. |
+| 2026-09-15 | MCP RunPod (`mcp.getrunpod.io`, `docs.runpod.io/mcp`) : bloqué par le proxy depuis la session cloud, `claude mcp add` s'arrête sur *Needs authentication*. | Section 0 bis : installation du MCP côté machine utilisateur. Entrée MCP de test retirée de la config. | Connecter le MCP sur le PC Windows, puis lui demander la liste de ses outils pour savoir s'il donne un shell dans le pod. |
 | 2026-09-15 | Correction : le pod **peut** redémarrer en CPU (*Start Pod using CPUs*) — mon affirmation inverse était fausse. Constaté aussi : source en EU-CZ-1, volume en EU-RO-1, et volume accessible en S3. | Runbook corrigé ; voie S3 retenue à la place du transfert pod à pod ; ajout de `05_s3_sauvegarde.sh` et `06_s3_restauration.sh`. | Créer la clé S3 (Settings → S3 API Keys) ; confirmer si `suta-langues-test` monte déjà le volume. |
