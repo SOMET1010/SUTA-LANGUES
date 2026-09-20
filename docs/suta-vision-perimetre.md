@@ -325,6 +325,88 @@ qu'exigerait un traducteur.
 
 ---
 
+## 7bis. WAXAL — vérifié le 20/09/2026
+
+Jeu de parole africaine publié par Google Research (annonce du 03/02/2026),
+collecté 2021-2024 par des partenaires africains qui en gardent la propriété.
+Dépôt : `google/WaxalNLP`. Créé le 19/01/2026, **mis à jour le 01/09/2026**.
+255,3 K téléchargements, 285 mentions. Article : arXiv **2602.02734**.
+
+> **Des données, pas des modèles.** Aucun point de reprise ASR ou TTS n'est
+> publié, et rien d'embarquable sur téléphone. Il faudrait entraîner soi-même.
+
+### La question posée : nos langues y sont-elles ?
+
+✅ **NON.** Aucune langue cible de SUTA / JULABA parmi les 29 codes déclarés :
+ni `dyu` (dioula), ni `bci` (baoulé), ni sénoufo, ni bété, ni français.
+
+⚠️ **Le piège à ne pas retomber dedans** : `bau` **n'est PAS le baoulé**.
+En ISO 639-3, `bau` = Bada (Nigeria) ; le baoulé est `bci`. La ressemblance
+des codes a de quoi tromper une lecture rapide.
+
+Les 29 codes déclarés : `ach aka amh bau dag dga ewe fat ful hau ibo kik kpo
+lin lug luo mas mlg nyn orm pcm sid sna sog swa tir twi wal yor`.
+
+### ✅ Ce que la fiche NE déclare PAS — et qui est pourtant dans le dépôt
+
+C'est la trouvaille du jour, et elle ne se voit pas sur la page du jeu.
+
+Le front-matter du `README.md` porte **trois entrées mises en commentaire** —
+`# - bam`, `# - fuf`, `# - wol` — ainsi qu'un bloc `# - config_name: bam_tts`
+entièrement commenté. Or les fichiers, eux, **sont bien publiés** :
+
+| Répertoire | État | Contenu mesuré |
+|---|---|---|
+| `data/TTS/bam` | **non déclaré** | 26 fichiers parquet — train ≈ **4,01 Go** (20 fichiers), validation ≈ 517 Mo, test ≈ 552 Mo. **≈ 5,08 Go au total.** |
+| `data/TTS/wol` | non déclaré | présent |
+| `data/TTS/fuf` | non déclaré | présent |
+
+**Pour mesurer l'ordre de grandeur** : le TTS twi déclaré tient dans UN fichier
+d'entraînement de 511 Mo. Le bambara non déclaré en compte vingt, pour huit fois
+le volume. Ce n'est pas un résidu — c'est l'un des plus gros volets TTS du jeu.
+
+🔵 **CE QUI RESTE À VÉRIFIER, et il ne faut rien en conclure avant :**
+- **Le contenu.** Je n'ai pas pu lire une seule ligne : le visualiseur ne sert
+  pas une configuration non déclarée, et `huggingface.co` est bloqué en
+  téléchargement direct depuis le conteneur. Ce qui est établi, c'est
+  « 5 Go de parquet nommés `bam-*` dans un dossier TTS » — ni les heures, ni le
+  nombre de locuteurs, ni parole lue ou spontanée.
+- **Pourquoi c'est commenté.** Un embargo, un défaut de qualité, un problème de
+  consentement sont des hypothèses aussi plausibles qu'un oubli. Ces fichiers
+  peuvent disparaître à la prochaine mise à jour. **Ne pas bâtir dessus sans
+  copie locale ni clarification auprès des partenaires.**
+- **La licence exacte.** Voir ci-dessous.
+
+### ⚠️ La licence n'est PAS simplement CC-BY-4.0
+
+La fiche déclare **DEUX** licences : `cc-by-sa-4.0` **et** `cc-by-4.0`, sans
+dire laquelle couvre quel volet. Présenter WAXAL comme « CC-BY-4.0, usage
+commercial permis » est donc une simplification dangereuse : le **partage à
+l'identique** de CC-BY-SA contamine les modèles qui en dérivent.
+
+C'est exactement le mécanisme relevé au §6 — la licence affichée ne dit pas ce
+qui s'applique à la partie qu'on utilise. **À trancher par volet avant tout
+entraînement**, en particulier pour `bam`.
+
+### Ce qui pourrait servir, et à quel titre
+
+| Piste | Volume mesuré | Statut honnête |
+|---|---|---|
+| **`bam` TTS** (non déclaré) | ≈ 5,08 Go | La seule voix mandingue jamais croisée dans l'audit. **À auditionner et à sécuriser en priorité** — sous réserve de licence et de pérennité. |
+| **`aka` / `twi` / `fat`** (akan) | aka ASR : 10,1 K énoncés transcrits + 175 K non transcrits | Le baoulé est une langue kwa du groupe tano, proche de l'akan. Base de transfert **crédible mais non démontrée** : c'est de la R&D, pas un composant. |
+| **`ful`** (peul) | ASR ≈ 19,1 K énoncés · TTS ≈ 3,1 K phrases | Présent sur les marchés ivoiriens (bétail), mais hors du périmètre V1. |
+
+### Conséquence sur la thèse centrale (§2)
+
+Elle tient, et se précise. WAXAL est **libre et non liturgique** — ce qui est
+rare — mais **aucune de nos langues n'y figure**. Le biais n'est plus seulement
+« libre = liturgique » : il est aussi géographique. Le financement de la parole
+africaine libre va vers l'Afrique de l'Est, le Ghana et le Nigeria. La Côte
+d'Ivoire et le monde mandingue restent hors champ, sauf par la porte de service
+d'un répertoire `bam` que personne n'a déclaré.
+
+---
+
 ## 8. Registre des erreurs — à ne pas ressusciter
 
 Section conservée volontairement. Chacune de ces affirmations a été tenue pour
@@ -339,6 +421,8 @@ vraie à un moment de l'audit, puis réfutée.
 | 5 | « Injongo : 3 200 phrases par langue. » | ❌ **CONTREDIT.** ~3 160. |
 | 6 | « Common Voice v26 contient 7 167 clips baoulé. » | 🔵 **NON CONFIRMÉ** (décision du 17/09). Introuvable de mon côté — mais **je refuse de la déclarer fausse sur un résultat négatif.** La source exacte est à fournir. |
 | 7 | « Le dioula est la mieux dotée des langues ivoiriennes, donc le MVP commence par le dioula. » | ❌ **PÉRIMÉ.** La seule ressource à la fois libre et vivante (kunkado) est en bambara, et afvoices est malien. Décision remplacée le 17/09. |
+| 9 | « WAXAL est en CC-BY-4.0, usage commercial permis. » | 🔵 **À NUANCER.** La fiche déclare CC-BY-SA-4.0 **et** CC-BY-4.0, sans répartition publiée. Le partage à l'identique contaminerait les modèles dérivés. |
+| 10 | « `bau` pourrait être le baoulé. » | ❌ **FAUX.** `bau` = Bada (Nigeria). Le baoulé est `bci`. Erreur évitée de justesse, consignée pour qu'elle ne revienne pas. |
 | 8 | Fiches de dépôt fiables | ❌ **CONTREDIT trois fois en une journée** : fiche vide (voix baoulé), licence absente (Serengeti), fiche décrivant un autre jeu (InjongoIntent / GSM8k). |
 
 ---
