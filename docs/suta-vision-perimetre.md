@@ -396,6 +396,43 @@ entraînement**, en particulier pour `bam`.
 | **`aka` / `twi` / `fat`** (akan) | aka ASR : 10,1 K énoncés transcrits + 175 K non transcrits | Le baoulé est une langue kwa du groupe tano, proche de l'akan. Base de transfert **crédible mais non démontrée** : c'est de la R&D, pas un composant. |
 | **`ful`** (peul) | ASR ≈ 19,1 K énoncés · TTS ≈ 3,1 K phrases | Présent sur les marchés ivoiriens (bétail), mais hors du périmètre V1. |
 
+### L'outil de sécurisation et de mesure
+
+`outils/waxal_bam.py` — écrit le 20/09/2026, pod autorisé le même jour.
+
+```bash
+pip install "huggingface_hub>=0.25" "pyarrow>=17"
+
+# Rapide, quelques Mo lus à distance : schéma, lignes, heures, biais.
+python3 outils/waxal_bam.py --inspect --rapport rapport-bam.md
+
+# Lent, ~5,1 Go : copie locale + empreintes SHA-256 de chaque fichier.
+python3 outils/waxal_bam.py --secure --dest ./waxal-bam
+
+# Les deux, la mesure portant alors sur la copie locale.
+python3 outils/waxal_bam.py --secure --inspect --dest ./waxal-bam --rapport rapport-bam.md
+```
+
+Ce qu'il mesure, et pourquoi chaque point a été retenu :
+
+| Mesure | Ce qu'elle tranche |
+|---|---|
+| Fichiers, octets, lignes par split | Confronte au relevé du 20/09 : si le dépôt a bougé, on le voit. |
+| Schéma des colonnes | **Y a-t-il un identifiant de locuteur ?** Son absence dans afvoices avait fait tomber l'espoir du TTS. |
+| Heures d'audio | Lues dans l'**en-tête** WAV ou FLAC, sans décoder le signal. Sans colonne de durée, la valeur est extrapolée et **signalée comme telle**. |
+| Locuteurs distincts | Un seul locuteur = volet studio mono-locuteur, exploitable pour une voix. |
+| **Test du biais liturgique** | Applique à `bam` les marqueurs Watchtower relevés sur `jula_dyu` et `nzema_nzi`. Une voix mandingue libre qui serait encore une lecture des Écritures ne changerait rien au problème. |
+
+`outils/tests/test_waxal_bam.py` vérifie sans réseau les deux fonctions pures —
+lecture d'en-tête audio et détection du biais — sur les citations réelles de
+l'audit. Il a déjà trouvé deux bogues avant le départ, dont la normalisation de
+`Ɛ` et `Ɔ` : sans elle, « DƆNKILI » échappait au détecteur, et le test du biais
+serait passé à côté du corpus qu'il est censé reconnaître. Même piège que dans
+`packages/pass/src/langue.ts`, côté SUTA-BOT.
+
+⚠️ **Ce que l'outil ne fait pas** : il ne tranche pas la licence, il n'écoute
+pas, et il ne dit pas pourquoi le volet est non déclaré. Il mesure.
+
 ### Conséquence sur la thèse centrale (§2)
 
 Elle tient, et se précise. WAXAL est **libre et non liturgique** — ce qui est
