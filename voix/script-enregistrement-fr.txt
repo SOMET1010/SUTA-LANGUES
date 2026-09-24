@@ -1,0 +1,307 @@
+SUTA — SCRIPT D'ENREGISTREMENT DE LA VOIX NATIVE (FRANÇAIS)
+==================================================================
+
+Généré le 2026-09-24 par outils/generer_script_voix.py — graine 20260924.
+254 phrases. Durée estimée : 19 minutes de parole utile,
+soit deux à trois séances de deux heures avec les pauses et les reprises.
+
+POURQUOI CE SCRIPT-LÀ
+Les voix françaises disponibles sur étagère — métropolitaine, canadienne,
+belge, suisse — déforment les toponymes ivoiriens. C'est la première chose
+qu'on entend. Les blocs 2 et 3 sont donc bâtis sur les noms RÉELS du corpus
+de SUTA, en couvrant les familles qui font trébucher : -kro, -kaha, -dougou,
+-koro, et les noms à apostrophe initiale.
+
+CONDITIONS D'ENREGISTREMENT
+- Une seule personne, du début à la fin. Changer de voix en cours de route
+  rend le corpus inutilisable.
+- Pièce silencieuse, pas de studio nécessaire : fermer les fenêtres, éteindre
+  ventilateur et climatiseur, téléphone en mode avion.
+- Micro à vingt centimètres, distance CONSTANTE. La régularité compte plus
+  que la qualité du micro.
+- WAV, 22 050 Hz ou plus, mono, 16 bits. Aucun traitement : ni réverbération,
+  ni réduction de bruit, ni compression. Le modèle apprendrait le traitement.
+- Un fichier par phrase, nommé par son numéro : 0001.wav, 0002.wav…
+- Ton naturel et régulier. Ni lecture de journal télévisé, ni sur-jeu.
+- En cas d'erreur : marquer une pause de deux secondes et refaire la phrase
+  entière. Ne jamais reprendre en milieu de phrase.
+- Enregistrer trente secondes de silence de la pièce, en 0000.wav.
+
+AVANT DE COMMENCER
+La personne enregistrée devient la voix de SUTA. Un accord écrit est
+nécessaire : usages autorisés, durée, conditions de retrait. Ce n'est pas une
+formalité — sa voix sera clonée.
+
+==================================================================
+
+1. LA VOIX DE SUTA — ce qu'il dit tous les jours
+------------------------------------------------
+0001  Bonjour, je suis SUTA, l'assistant de l'ANSUT.
+0002  Dites-moi le nom de votre village et je regarde avec vous.
+0003  On est ensemble.
+0004  Je vous écoute.
+0005  Par quoi voulez-vous commencer ?
+0006  Je peux vous dire si votre localité est connectée.
+0007  Je peux vous indiquer les opérateurs présents chez vous.
+0008  Je peux vous orienter vers une formation au numérique.
+0009  Je ne trouve pas cette information dans mes documents.
+0010  Je préfère vous le dire franchement : je ne sais pas.
+0011  Voulez-vous que je cherche autrement ?
+0012  C'est noté.
+0013  Un instant, je regarde.
+0014  Je cherche dans les fiches de l'ANSUT.
+0015  Voilà ce que je trouve.
+0016  Je n'ai pas bien entendu, pouvez-vous répéter ?
+0017  Reprenons depuis le début.
+0018  Est-ce que cela répond à votre question ?
+0019  Avez-vous besoin d'autre chose ?
+0020  Merci, et à bientôt.
+
+2. TOPONYMES IVOIRIENS — le cœur du travail
+-------------------------------------------
+0021  Sendre-Sokoro est couvert par le réseau mobile.
+0022  À N'Zikro, la fibre optique n'est pas encore arrivée.
+0023  Je regarde la situation de Nogossankaha.
+0024  Sekodougou se trouve dans le département voisin.
+0025  Voulez-vous parler de Zego ou d'une autre localité ?
+0026  La couverture de Lahidougou a été relevée en mai.
+0027  Deux opérateurs sont présents à Foumbolo.
+0028  Il n'y a pas d'antenne à N'Gangoro-Nanafoue pour le moment.
+0029  N'Gorankro compte un point connecté.
+0030  Le signalement concerne Zaguinasso.
+0031  Entre Fobedougou et Mahandiana-Sobala, il y a une vingtaine de kilomètres.
+0032  Parlez-vous de Gahapleu ou de Koumbolikaha ?
+0033  Diakro et Tioroniaradougou dépendent du même département.
+0034  Dyendana-Sokoro est couvert par le réseau mobile.
+0035  À Tibinandouo, la fibre optique n'est pas encore arrivée.
+0036  Je regarde la situation de Tongbedougou.
+0037  Sirakoro se trouve dans le département voisin.
+0038  Voulez-vous parler de Mahandiana-Sobala ou d'une autre localité ?
+0039  La couverture de Koumbolikaha a été relevée en mai.
+0040  Deux opérateurs sont présents à Tioroniaradougou.
+0041  Il n'y a pas d'antenne à Sandonakaha pour le moment.
+0042  Dandougou compte un point connecté.
+0043  Le signalement concerne Koumbala.
+0044  Entre Kissikro et Alikro, il y a une vingtaine de kilomètres.
+0045  Parlez-vous de Katchekpli ou de N'Douakro ?
+0046  N'Zengouanou et Gouekro dépendent du même département.
+0047  Nangberekaha est couvert par le réseau mobile.
+0048  À N'Gosseagui, la fibre optique n'est pas encore arrivée.
+0049  Je regarde la situation de Kakoro.
+0050  Douenefla se trouve dans le département voisin.
+0051  Voulez-vous parler de Alikro ou d'une autre localité ?
+0052  La couverture de N'Douakro a été relevée en mai.
+0053  Deux opérateurs sont présents à Gouekro.
+0054  Il n'y a pas d'antenne à Ziedougou pour le moment.
+0055  Kagbolodougou compte un point connecté.
+0056  Le signalement concerne Kouenoufla-Gottron.
+0057  Entre Barandakoro et Beoua-Zibiao, il y a une vingtaine de kilomètres.
+0058  Parlez-vous de N'Doukahakro ou de Takoro ?
+0059  Toumoukoro et N'Do-Kouassikro dépendent du même département.
+0060  Palmafrique est couvert par le réseau mobile.
+0061  À Dossemekaha, la fibre optique n'est pas encore arrivée.
+0062  Je regarde la situation de Zemenafla-B.
+0063  Tounvokro se trouve dans le département voisin.
+0064  Voulez-vous parler de Beoua-Zibiao ou d'une autre localité ?
+0065  La couverture de Takoro a été relevée en mai.
+0066  Deux opérateurs sont présents à N'Do-Kouassikro.
+0067  Il n'y a pas d'antenne à N'Gbekro pour le moment.
+0068  Yalombi-Kouassikro compte un point connecté.
+0069  Le signalement concerne N'Diorekro.
+0070  Entre M'Pody et Fodonkaha, il y a une vingtaine de kilomètres.
+0071  Parlez-vous de Allanikro ou de Djadoubango ?
+0072  Sottikro et Vacabadougou dépendent du même département.
+0073  Tobly-Bangolo est couvert par le réseau mobile.
+0074  À Nakalakaha, la fibre optique n'est pas encore arrivée.
+0075  Je regarde la situation de Lenguedougou.
+0076  M'Bahiablekro se trouve dans le département voisin.
+0077  Voulez-vous parler de Fodonkaha ou d'une autre localité ?
+0078  La couverture de Djadoubango a été relevée en mai.
+0079  Deux opérateurs sont présents à Vacabadougou.
+0080  Il n'y a pas d'antenne à Ouolokaha pour le moment.
+0081  Kokokaha compte un point connecté.
+0082  Le signalement concerne Kaggninbelekaha.
+0083  Entre Andianou et Tirikoro, il y a une vingtaine de kilomètres.
+0084  Parlez-vous de Kandiedougou ou de Doguidjarikaha ?
+0085  Kouroukoro et Assoumou-Kouassikro dépendent du même département.
+0086  Assebrokro est couvert par le réseau mobile.
+0087  À Koungbekoro, la fibre optique n'est pas encore arrivée.
+0088  Je regarde la situation de Gopieu.
+0089  N'Gom se trouve dans le département voisin.
+0090  Voulez-vous parler de Tirikoro ou d'une autre localité ?
+0091  La couverture de Doguidjarikaha a été relevée en mai.
+0092  Deux opérateurs sont présents à Assoumou-Kouassikro.
+0093  Il n'y a pas d'antenne à Messarandougou pour le moment.
+0094  Babadougou compte un point connecté.
+0095  Le signalement concerne Dialakoro.
+0096  Entre Ouatte et Tikakro, il y a une vingtaine de kilomètres.
+0097  Parlez-vous de Sokoro ou de Nongotolokaha ?
+0098  Maniekoro et Somokoro dépendent du même département.
+0099  Gondodougou est couvert par le réseau mobile.
+0100  À Ladialakaha, la fibre optique n'est pas encore arrivée.
+0101  Je regarde la situation de Assandeinkro.
+0102  Fizankoro se trouve dans le département voisin.
+0103  Voulez-vous parler de Tikakro ou d'une autre localité ?
+0104  La couverture de Nongotolokaha a été relevée en mai.
+0105  Deux opérateurs sont présents à Somokoro.
+0106  Il n'y a pas d'antenne à Mahandougou pour le moment.
+0107  Kapele-Sokoro compte un point connecté.
+0108  Le signalement concerne Kagbe.
+0109  Entre Zangokro et Blamadougou, il y a une vingtaine de kilomètres.
+0110  Parlez-vous de N'Deou ou de Yorodougou ?
+0111  Missirikoro et Asse-N'Gattakro dépendent du même département.
+0112  Kopikaha est couvert par le réseau mobile.
+0113  À Fourougbankoro, la fibre optique n'est pas encore arrivée.
+0114  Je regarde la situation de Siaridougou.
+0115  Kengueledougou se trouve dans le département voisin.
+0116  Voulez-vous parler de Blamadougou ou d'une autre localité ?
+0117  La couverture de Yorodougou a été relevée en mai.
+0118  Deux opérateurs sont présents à Asse-N'Gattakro.
+0119  Il n'y a pas d'antenne à Monso pour le moment.
+0120  Lagoukro compte un point connecté.
+0121  Le signalement concerne N'Zida-Zoukouboli.
+0122  Entre N'Goloblasso et Sokpokaha, il y a une vingtaine de kilomètres.
+0123  Parlez-vous de Kondorodougou ou de Affalikro ?
+0124  Satama-Sokoro et N'Guissidougou dépendent du même département.
+0125  N'Zebenou est couvert par le réseau mobile.
+0126  À Lomo-Soukpebo, la fibre optique n'est pas encore arrivée.
+0127  Je regarde la situation de N'Semera.
+0128  Djetouankro se trouve dans le département voisin.
+0129  Voulez-vous parler de Sokpokaha ou d'une autre localité ?
+0130  La couverture de Affalikro a été relevée en mai.
+0131  Deux opérateurs sont présents à N'Guissidougou.
+0132  Il n'y a pas d'antenne à Kouame-Konankro pour le moment.
+0133  Nongohouelekaha compte un point connecté.
+0134  Le signalement concerne Danfo.
+0135  Entre Sanegourifla et Taki-Salekro, il y a une vingtaine de kilomètres.
+0136  Parlez-vous de Abouokro ou de Tionrikaha ?
+0137  Fandiakaha et Kroukro-Mafele dépendent du même département.
+0138  N'Zabonou est couvert par le réseau mobile.
+0139  À Faboudougou, la fibre optique n'est pas encore arrivée.
+0140  Je regarde la situation de Nignanigakaha.
+0141  Diedougou se trouve dans le département voisin.
+0142  Voulez-vous parler de Taki-Salekro ou d'une autre localité ?
+0143  La couverture de Tionrikaha a été relevée en mai.
+0144  Deux opérateurs sont présents à Kroukro-Mafele.
+0145  Il n'y a pas d'antenne à N'Drossou pour le moment.
+0146  Tiapleu compte un point connecté.
+0147  Le signalement concerne Farakoro.
+0148  Entre Tenindieri et Dioulassoba, il y a une vingtaine de kilomètres.
+0149  Parlez-vous de Pediakaha ou de Lagomonkaha ?
+0150  Godegouin et Kapolokoro dépendent du même département.
+0151  Katiekaha est couvert par le réseau mobile.
+0152  À N'Zokossou, la fibre optique n'est pas encore arrivée.
+0153  Je regarde la situation de Kongokro.
+0154  N'Dienkaha se trouve dans le département voisin.
+0155  Voulez-vous parler de Dioulassoba ou d'une autre localité ?
+0156  La couverture de Lagomonkaha a été relevée en mai.
+0157  Deux opérateurs sont présents à Kapolokoro.
+0158  Il n'y a pas d'antenne à Gaoulou pour le moment.
+0159  Katchire-Essekro compte un point connecté.
+0160  Le signalement concerne Aka-Yaokro.
+0161  Entre Koffidougou et Akpessekro, il y a une vingtaine de kilomètres.
+0162  Parlez-vous de Gounga ou de Karakoro ?
+0163  Kouakoukankro et N'Dokro dépendent du même département.
+0164  Koffi-Ahoussoukro est couvert par le réseau mobile.
+0165  À Kaedrou, la fibre optique n'est pas encore arrivée.
+0166  Je regarde la situation de Katiorple.
+0167  Koumokro se trouve dans le département voisin.
+0168  Voulez-vous parler de Akpessekro ou d'une autre localité ?
+0169  La couverture de Karakoro a été relevée en mai.
+0170  Deux opérateurs sont présents à N'Dokro.
+0171  Il n'y a pas d'antenne à M'Brou pour le moment.
+0172  N'Dokariendougou compte un point connecté.
+0173  Le signalement concerne Kossagui.
+0174  Entre Nafoungolo et Foumbolo, il y a une vingtaine de kilomètres.
+
+3. VOCABULAIRE DE L'ANSUT
+-------------------------
+0175  La fibre optique relie les chefs-lieux de région.
+0176  La couverture mobile n'est pas la même que la couverture Internet.
+0177  Une zone blanche est une zone sans aucun réseau.
+0178  Le débit descendant se mesure en mégabits par seconde.
+0179  Orange, MTN et Moov sont les trois opérateurs mobiles du pays.
+0180  L'ANSUT est l'Agence nationale du service universel des télécommunications.
+0181  Le PND est le Plan national de développement.
+0182  Le PTBA est le plan de travail et de budget annuel.
+0183  Le PASS permet de s'équiper d'un smartphone subventionné.
+0184  L'ARTCI régule les télécommunications en Côte d'Ivoire.
+0185  Le RGPH est le recensement général de la population et de l'habitat.
+0186  La DRENA est la direction régionale de l'éducation nationale.
+0187  ANSUT CONNECTE rapproche le numérique des populations.
+0188  Une école électrifiée peut accueillir une salle informatique.
+0189  Le service universel concerne les zones que le marché ne dessert pas.
+0190  Un point connecté offre un accès public à Internet.
+0191  La littératie numérique, c'est savoir se servir des outils.
+0192  L'inclusion numérique vise celles et ceux qui restent à l'écart.
+0193  Le signalement remonte directement aux équipes de l'ANSUT.
+0194  Le maillage du territoire progresse chaque année.
+
+4. CHIFFRES, DATES ET UNITÉS
+----------------------------
+0195  Quatre-vingt-douze pour cent de la population est couverte.
+0196  Le débit atteint vingt-trois mégabits par seconde.
+0197  Trois mille deux cent quarante localités sont recensées.
+0198  La mesure date du quinze mai deux mille vingt-six.
+0199  Il reste dix-sept kilomètres de fibre à poser.
+0200  Le relevé porte sur vingt-six mille cent douze fiches.
+0201  Sur mille écoles, une seule est électrifiée.
+0202  Le taux passe de soixante-huit à soixante-quatorze pour cent.
+0203  Le projet court de deux mille vingt-six à deux mille trente.
+0204  Comptez entre cinq et huit jours ouvrables.
+0205  Le premier trimestre s'achève le trente et un mars.
+0206  Deux cent quatre-vingts villages sont concernés.
+0207  Le coût est estimé à quinze millions de francs CFA.
+0208  Neuf heures du matin, heure d'Abidjan.
+0209  La couverture est de cent pour cent sur ce département.
+
+5. COUVERTURE PHONÉTIQUE DU FRANÇAIS
+------------------------------------
+0210  Le vent du nord souffle sur les champs de coton.
+0211  Huit huîtres cuites huilent le pinceau du peintre.
+0212  Quinze grands bancs brillent sous un ciel brun.
+0213  La grenouille grimpe le long du grillage rouillé.
+0214  Un bon vin blanc vaut bien un long banquet.
+0215  Ce soir, je serai chez toi avant sept heures.
+0216  Les enfants jouent dehors pendant que l'orage gronde.
+0217  Il faut qu'il aille voir ailleurs si j'y suis.
+0218  Trois très gros rats gris traversent la route.
+0219  Mon oncle Aimé emmène Anne en ville.
+0220  Le pneu crevé siffle doucement dans le silence.
+0221  Elle a choisi la chaise chez le charpentier.
+0222  Georges juge que le jury jugera justement.
+0223  Une pluie fine tombe sur le toit de tôle.
+0224  Nous nous approchons lentement du village endormi.
+0225  L'ingénieur installe une antenne au sommet de la colline.
+0226  Personne n'ignore que le progrès prend du temps.
+0227  Quatre-vingts kilomètres séparent les deux communes.
+0228  Le chef du quartier accueille les visiteurs avec le sourire.
+0229  Tout le monde attend que la lumière revienne.
+0230  Ce petit pont de bois enjambe un ruisseau tranquille.
+0231  Je n'ai jamais entendu une histoire aussi extraordinaire.
+0232  Sa famille habite près de la gare depuis longtemps.
+0233  Les travaux commenceront dès que le budget sera voté.
+0234  Un yaourt, une bouteille d'huile et deux boîtes d'allumettes.
+
+6. PROSODIE — questions, accords, interruptions
+-----------------------------------------------
+0235  Votre village est-il connecté ?
+0236  Quels opérateurs couvrent votre localité ?
+0237  Où puis-je me former au numérique ?
+0238  Comment puis-je m'équiper ?
+0239  Vous voulez signaler un problème de réseau ?
+0240  Ah, bonne question.
+0241  Attendez… je vérifie.
+0242  Hmm, ce n'est pas ce que je vois de mon côté.
+0243  D'accord, j'ai compris.
+0244  Très bien.
+0245  Excusez-moi, je vous ai coupé.
+0246  Allez-y, je vous en prie.
+0247  Non, ce n'est pas exact.
+0248  Oui, tout à fait.
+0249  C'est bien cela.
+0250  Je préfère ne rien affirmer sans source.
+0251  Vous avez dit Korhogo, c'est bien ça ?
+0252  Répétez le nom, s'il vous plaît.
+0253  Parfait, je note.
+0254  Je reste avec vous.
