@@ -140,6 +140,43 @@ with tempfile.TemporaryDirectory() as tmp:
     )
     verifier("l'absence de prise de bruit est signalée", any("bruit de fond absente" in x for x in messages))
 
+# --- gain global du décodeur de rattrapage ---------------------------------
+# Importé ici plutôt que dans son propre fichier : ces deux fonctions sont
+# pures, et un test qui exige `av` installé ne tournerait pas sur un pod nu.
+
+print("== gain global (décodeur de rattrapage) ==")
+_spec_d = importlib.util.spec_from_file_location("dnv_src", RACINE / "outils" / "decoder_notes_vocales.py")
+_src = _spec_d.origin
+_code = Path(_src).read_text(encoding="utf-8")
+_ns: dict = {"np": None}
+# On n'exécute QUE les deux fonctions pures, sans importer av ni soxr.
+_debut = _code.index("def gain_global(")
+_fin = _code.index("def decoder(")
+exec(compile(_code[_debut:_fin], _src, "exec"), _ns)  # noqa: S102
+gain_global = _ns["gain_global"]
+prises_trop_fortes = _ns["prises_trop_fortes"]
+
+verifier("lot sous 1,0 : aucun gain appliqué", gain_global({"0001": 0.8, "0002": 0.95}) == 1.0)
+verifier("lot vide : aucun gain", gain_global({}) == 1.0)
+verifier(
+    "le gain ramène la crête la plus haute à 1,0 exactement",
+    abs(gain_global({"0001": 0.5, "0002": 1.415}) * 1.415 - 1.0) < 1e-9,
+)
+_g = gain_global({"0001": 0.50, "0002": 1.20})
+verifier(
+    "les écarts de niveau entre prises sont PRÉSERVÉS (pas de normalisation par fichier)",
+    abs((0.50 * _g) / (1.20 * _g) - 0.50 / 1.20) < 1e-9,
+    "(sinon on effacerait l'indice d'un micro déplacé)",
+)
+verifier(
+    "au-delà du seuil, la prise est nommée — le codec n'explique plus",
+    prises_trop_fortes({"0011": 1.0046, "0107": 1.2894, "0109": 1.4150}) == ["0107", "0109"],
+)
+verifier(
+    "le dépassement ordinaire du codec n'accuse personne",
+    prises_trop_fortes({"0011": 1.0046, "0028": 1.0040}) == [],
+)
+
 print()
 if echecs:
     print(f"{len(echecs)} test(s) en échec : {', '.join(echecs)}")

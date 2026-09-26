@@ -5,3 +5,16 @@ __pycache__/
 .env
 dist/
 upload/
+
+# Enregistrements de voix — jamais dans le dépôt.
+# La passation l'impose (« l'identité des locuteurs reste privée ») et un
+# `git add .` malheureux publierait la voix d'une personne identifiable.
+voix/brut/
+voix/decode/
+voix/dataset/
+*.wav
+*.opus
+*.ogg
+*.flac
+*.m4a
+*.mp3
