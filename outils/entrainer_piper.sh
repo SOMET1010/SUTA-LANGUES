@@ -30,6 +30,17 @@
 #   4. La voix eSpeak est `fr`. Ni `fr-FR`, ni `fr-fr`, qui n'existent pas —
 #      eSpeak ne connaît que `fr`, `fr-BE` et `fr-CH`. (Ni `fr-CI`, du reste :
 #      cette locale n'existe pas davantage ici qu'ailleurs.)
+#   5. `onnxscript` manque : `piper-tts[train]` ne le déclare pas, et l'export
+#      ONNX s'arrête dessus. Découvert APRÈS l'entraînement, c'est la pire
+#      place possible pour une dépendance oubliée. Ajouté à l'étape 1.
+#   6. `export_onnx` prend `--checkpoint` et `--output-file`, pas des
+#      arguments positionnels.
+#
+# CE QUI A ÉTÉ MESURÉ
+#   50 étapes réelles sur le corpus, batch 4, 4 cœurs CPU : 2 min 33, soit
+#   ~3 s par étape, et un point de reprise de 845 Mo produit — la taille même
+#   de `siwis`. Sur CPU, un affinage utile dépasserait donc la dizaine
+#   d'heures : c'est mesuré, pas supposé.
 #
 #   Vérifié aussi : la table de phonèmes écrite par la 1.8 coïncide exactement
 #   avec celle de `siwis` sur ses identifiants — les embeddings s'alignent,
@@ -75,7 +86,8 @@ command -v nvidia-smi >/dev/null \
   || echo "   (pas de GPU détecté — mesuré : ~7 s par étape sur 4 cœurs CPU, donc inutilisable)"
 
 echo "== 1. Dépendances =="
-python3 -m pip install --quiet --upgrade "piper-tts[train]" huggingface_hub cython || {
+# onnxscript n'est PAS tiré par piper-tts[train] alors que l'export en dépend.
+python3 -m pip install --quiet --upgrade "piper-tts[train]" huggingface_hub cython onnxscript || {
   echo "Installation par pip échouée." >&2
   exit 3
 }
@@ -135,8 +147,13 @@ echo "== 4. Affinage =="
 # entraînement depuis zéro — inutile sur douze minutes de parole — donc mieux
 # vaut s'arrêter et le signaler.
 #
-# Avertissement bénin observé : « Could not load MOS predictor 'utmos' (403) ».
-# C'est une métrique de confort, désactivée d'elle-même. Rien à corriger.
+# Deux avertissements bénins, observés :
+#   « Could not load MOS predictor 'utmos' (403) » — métrique de confort,
+#   désactivée d'elle-même.
+#   « ModelCheckpoint(monitor='val_mel') could not find the monitored key » —
+#   apparaît tant qu'aucune époque de validation n'a tourné. Sur un
+#   entraînement long elle tourne, et la sélection du meilleur point de
+#   reprise fonctionne ; `last.ckpt` est écrit dans tous les cas.
 python3 -m piper.train fit \
   --data.csv_path "$DATASET/metadata.csv" \
   --data.audio_dir "$DATASET/wav" \
@@ -150,6 +167,7 @@ python3 -m piper.train fit \
   --trainer.devices 1 \
   --trainer.precision 32 \
   --trainer.max_epochs "$EPOQUES" \
+  --trainer.enable_checkpointing true \
   --trainer.default_root_dir "$TRAVAIL/$NOM_VOIX" \
   --ckpt_path "$CKPT_LOCAL"
 
@@ -157,7 +175,14 @@ echo "== 5. Export ONNX =="
 DERNIER=$(find "$TRAVAIL/$NOM_VOIX" -name '*.ckpt' -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
 test -n "$DERNIER" || { echo "aucun point de reprise produit" >&2; exit 4; }
 echo "   depuis $DERNIER"
-python3 -m piper.train.export_onnx "$DERNIER" "$TRAVAIL/voix/$NOM_VOIX.onnx"
+mkdir -p "$TRAVAIL/voix"
+# Si cette étape échoue sur « assert (discriminant >= 0).all() » dans
+# transforms.py, ce n'est probablement PAS un bug d'export : observé sur un
+# modèle de 50 étapes, dont les splines sont encore dans un état dégénéré.
+# Sur un modèle réellement affiné, l'assertion doit tenir. Si elle casse quand
+# même après un entraînement complet, c'est le modèle qui a divergé — relire
+# les pertes avant de s'acharner sur l'export.
+python3 -m piper.train.export_onnx --checkpoint "$DERNIER" --output-file "$TRAVAIL/voix/$NOM_VOIX.onnx"
 cp "$TRAVAIL/$NOM_VOIX/config.json" "$TRAVAIL/voix/$NOM_VOIX.onnx.json"
 
 echo "== 6. Épreuve à l'oreille =="
